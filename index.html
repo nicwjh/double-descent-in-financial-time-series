@@ -1,8 +1,6 @@
 <html>
 <head>
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
-
 <link rel="shortcut icon" href="images/icon.ico">
 <style type="text/css">
 	body {
@@ -228,9 +226,17 @@
     </div>
   </div>
 
-  <div class="main-content-block">
-      <img src="./images/fig8_summary.png" width="100%" style="border:1px solid #DDD; border-radius:4px;"alt="Summary grid showing synthetic double descent, noise suppression of the interpolation peak, and flat behavior for S&P 500 returns.">
-  </div>
+<div class="main-content-block">
+    <div style="text-align:center;">
+        <img src="./images/fig8_summary.png" width="100%" 
+             style="border:1px solid #DDD; border-radius:4px;"
+             alt="Summary grid showing synthetic double descent, noise suppression of the interpolation peak, and flat behavior for S&P 500 returns.">
+        <div style="font-size:14px; color:#555;">
+            Figure 1. Summary of primary experimental results.
+        </div>
+    </div>
+</div>
+
 
   <div class="margin-right-block">
       Summary of the core findings. Synthetic data exhibits clear double descent, noise suppresses the interpolation peak, and real S&P 500 returns resemble a high noise system with no meaningful double descent structure.
@@ -273,7 +279,7 @@ Existing work has characterized double descent on clean benchmark datasets and h
 </div>
 
 <p>
-To evaluate these hypotheses, we design experiments that systematically vary signal-to-noise ratio in synthetic autoregressive processes (5 noise levels, 8 model sizes, 5 random seeds, yielding 200 training runs) and compare these results with analogous experiments on 10 years of S&P 500 constituent data. The experimental design enables a direct assessment of how noise, structure, and model capacity interact to determine generalization behavior.
+To evaluate these hypotheses, we design experiments that systematically vary signal-to-noise ratio in controlled synthetic data (5 noise levels, 8 model sizes, 5 random seeds, yielding 200 training runs) and compare these results with analogous experiments on 10 years of S&P 500 constituent data. The experimental design enables a direct assessment of how noise, structure, and model capacity interact to determine generalization behavior.
 </p>
 
 <p>
@@ -352,20 +358,20 @@ This section describes the data sources, model architectures, and experimental p
 
 <h3>Synthetic data with controlled signal-to-noise ratios</h3>
 <p>
-The synthetic dataset provides a stable, learnable nonlinear relationship between past and future values. We first generate a univariate autoregressive process
-<span style="white-space:nowrap;">z<sub>t</sub> = ρ z<sub>t-1</sub> + ε<sub>t</sub></span>,
-where ε<sub>t</sub> is standard Gaussian noise and |ρ| &lt; 1. From this latent process we construct feature vectors 
-<span style="font-family:monospace">x<sub>t</sub> ∈ ℝ²⁰</span> using linear projections and nonlinear transformations. Targets are obtained by applying a smooth nonlinear function to x<sub>t</sub> and then adding independent Gaussian label noise with standard deviation 
-<span style="font-family:monospace">σ ∈ {0, 0.5, 1.0, 2.0, 4.0}</span>. When σ = 0 the mapping is deterministic; for larger σ values, noise increasingly dominates and the effective signal-to-noise ratio decreases.
+The synthetic dataset provides a stable, learnable nonlinear relationship with controlled noise levels. We generate feature vectors 
+<span style="font-family:monospace">x ∈ ℝ²⁰</span> by sampling independently from a standard normal distribution, 
+<span style="font-family:monospace">x ~ N(0, I)</span>. Targets are obtained by applying a smooth nonlinear function to x and then adding independent Gaussian label noise with standard deviation 
+<span style="font-family:monospace">σ ∈ {0, 0.5, 1.0, 2.0, 4.0}</span>. Specifically, 
+<span style="font-family:monospace">y = f(x) + σε</span>, where f is a deterministic nonlinear mapping and ε ~ N(0,1). When σ = 0 the mapping is deterministic; for larger σ values, noise increasingly dominates and the effective signal-to-noise ratio decreases.
 </p>
 
 <p>
-For each noise level we generate 5,000 samples and apply a 70/15/15 percent train/validation/test split. Synthetic data serves two purposes: it verifies that the implementation reproduces classical double descent when signal is strong, and it isolates the effect of label noise on generalization without confounding by non-stationarity.
+For each noise level we generate 5,000 samples and apply a 70/15/15 percent train/validation/test split. Synthetic data serves two purposes: it verifies that the implementation reproduces classical double descent when signal is strong, and it isolates the effect of label noise on generalization without confounding by temporal dependencies or non-stationarity.
 </p>
 
 <h3>S&P 500 financial data</h3>
 <p>
-The financial dataset consists of daily returns and derived technical indicators for S&P 500 constituents from 2014 to 2024. For each stock and date we compute lagged returns (1, 5, and 20 day), 20-day rolling volatility, a 20-day moving average of volume, and market return. Features are standardized cross-sectionally within each date. The prediction target is the next-day return.
+The financial dataset was constructed from scratch using daily price and volume data for S&P 500 constituents downloaded via the Yahoo Finance API (yfinance). We selected approximately 50 liquid, large-cap stocks spanning 2014 to 2024 and engineered a feature set designed to capture common technical trading signals. For each stock and date, we compute lagged returns (1, 5, and 20 day), 20-day rolling volatility, 20-day moving average of volume, and market return. Features are standardized cross-sectionally within each date to account for time-varying market conditions. The prediction target is the next-day return.
 </p>
 
 <p>
@@ -632,7 +638,7 @@ Figure 2 shows test mean squared error as a function of model width for the synt
 <h2>Experiment 2: Effect of decreasing signal-to-noise ratio</h2>
 
 <p>
-We next examine how label noise alters generalization. Figure 3 reveals a surprising pattern: simple models (width 8) consistently outperform complex models (width 1024) across all noise levels, with no crossover point observed. Even at σ=0 where neural networks achieve excellent performance (R=0.99), and at σ = 4 the simple model achieves 34% lower error. Notably, the best-performing 
+We next examine how label noise alters generalization. Figure 3 reveals a surprising pattern: simple models (width 8) consistently outperform complex models (width 1024) across all noise levels, with no crossover point observed. Even at σ=0 where neural networks achieve excellent performance (R<sup>2</sup>=0.99), and at σ = 4 the simple model achieves 34% lower error. Notably, the best-performing 
 width shifts from 16 at σ=0 to 8 at all higher noise levels, indicating that 
 optimal model complexity decreases as signal-to-noise ratio degrades. The 
 threshold-width model (width 64) consistently exhibits the poorest robustness, 
@@ -641,10 +647,9 @@ reflecting its sensitivity to interpolation.
 
 <p>
 Table 2 quantifies how the interpolation peak evolves with noise. The peak 
-consistently occurs near width 64 across all synthetic noise levels, confirming 
-the theoretical prediction that it appears at the interpolation threshold. However, 
+consistently occurs near width 64 across all synthetic noise levels, which is consistent with theoretical predictions that the peak appears at the interpolation threshold. However, 
 its magnitude decreases systematically: from 776% worse than the best model at 
-σ=0, to 145% worse at σ=0.5, stabilizing around 142-145% for σ≥1.0. This 98-fold 
+σ=0, to 145% worse at σ=0.5, stabilizing around 142-145% for σ≥1.0. This 86-fold 
 attenuation demonstrates that while the peak persists structurally, its practical 
 impact diminishes as noise dominates signal.
 </p>
@@ -655,16 +660,16 @@ impact diminishes as noise dominates signal.
 </div>
 
 <p>
-Figure 7 reports out-of-sample R² for the same three models. The threshold model fails first as noise increases, followed by the complex model, while the simple model remains most stable. This pattern is consistent with theoretical predictions: models near the interpolation threshold are the least robust because they transition between underparameterized and overparameterized regimes.
+Figure 4 reports out-of-sample R² for the same three models. The threshold model fails first as noise increases, followed by the complex model, while the simple model remains most stable. This pattern is consistent with theoretical predictions: models near the interpolation threshold are the least robust because they transition between underparameterized and overparameterized regimes.
 </p>
 
 <div style="text-align:center;">
   <img src="./images/fig7_r2_degradation.png" width="85%" alt="Out-of-sample R² for simple, threshold, and complex models across noise levels, showing that threshold models fail first.">
-  <div style="font-size:14px; color:#555;">Figure 7. Out-of-sample R² for representative models across noise levels.</div>
+  <div style="font-size:14px; color:#555;">Figure 4. Out-of-sample R² for representative models across noise levels.</div>
 </div>
 
 <p>
-We also compare neural networks with ridge regression. Figure 6 shows that ridge degrades smoothly as noise increases, while the best neural network across widths deteriorates sharply once noise dominates the signal. At high noise levels ridge regression outperforms all neural networks, maintaining 
+We also compare neural networks with ridge regression. Figure 5 shows that ridge degrades smoothly as noise increases, while the best neural network across widths deteriorates sharply once noise dominates the signal. At high noise levels ridge regression outperforms all neural networks, maintaining 
 positive R²=0.08 at σ=4 while the best neural network degrades to R²=-0.03. This 
 illustrates that ridge's explicit L2 regularization and linear inductive bias provide 
 graceful degradation, whereas neural networks' flexibility becomes a liability when 
@@ -673,7 +678,7 @@ signal is weak.
 
 <div style="text-align:center;">
   <img src="./images/fig6_ridge_vs_nn.png" width="85%" alt="Comparison of ridge regression and neural networks across noise levels, highlighting that ridge is more robust at high noise.">
-  <div style="font-size:14px; color:#555;">Figure 6. Comparison of ridge regression and neural networks across noise levels.</div>
+  <div style="font-size:14px; color:#555;">Figure 5. Comparison of ridge regression and neural networks across noise levels.</div>
 </div>
 
 <p>
@@ -683,25 +688,47 @@ These results confirm the second hypothesis: the interpolation peak flattens as 
 <h2>Experiment 3: Financial time series</h2>
 
 <p>
-Figure 4 shows test mean squared error versus model width for S&P 500 returns. The curve is almost flat across four orders of magnitude in parameter count. A small peak appears near width 64, but its magnitude is minimal—only 9 percent worse than the best model. All models achieve negative R², indicating that none outperform the naive mean predictor. This behavior matches the synthetic results at high noise levels.
+Figure 6 shows test mean squared error versus model width for S&P 500 returns. The curve is almost flat across four orders of magnitude in parameter count. A small peak appears near width 64, but its magnitude is minimal—only 9 percent worse than the best model. All models achieve negative R², indicating that none outperform the naive mean predictor. This behavior matches the synthetic results at high noise levels.
 </p>
 
 <div style="text-align:center;">
   <img src="./images/fig4_sp500_dd.png" width="85%" alt="Test mean squared error versus model width for S&P 500 data, showing a nearly flat curve with a very small interpolation peak.">
-  <div style="font-size:14px; color:#555;">Figure 4. Test MSE versus model width for S&P 500 data.</div>
+  <div style="font-size:14px; color:#555;">Figure 6. Test MSE versus model width for S&P 500 data.</div>
 </div>
 
 <p>
-Figure 5 highlights this contrast. The synthetic curve exhibits a pronounced interpolation peak and recovery, whereas the financial curve shows no meaningful structure. Real financial data behave like a high noise system in which the conditions necessary for double descent do not hold.
+The contrast with synthetic data is striking. Table 2 quantifies this difference: on synthetic data with σ=0, the interpolation peak is 776% worse than the best model, while on S&P 500 data the peak is only 9% worse. This represents a 86-fold attenuation of the double descent structure. Moreover, the best neural network achieves R²=0.988 on synthetic data but R²=-0.002 on financial data, indicating that even the optimal model configuration fails to extract any predictive signal from equity returns. Real financial data behave like a system with signal-to-noise ratio far beyond σ=4, where the conditions necessary for double descent do not hold.
 </p>
-
-<div style="text-align:center;">
-  <img src="./images/fig5_comparison.png" width="85%" alt="Side-by-side comparison of test error curves for synthetic data and S&P 500 returns, illustrating strong double descent only in the synthetic case.">
-  <div style="font-size:14px; color:#555;">Figure 5. Side-by-side comparison of synthetic and S&P 500 test error curves.</div>
-</div>
 
 <p>
 These results confirm the third hypothesis. When the data generating process is noisy and unstable, increasing model capacity does not improve generalization and can worsen robustness.
+</p>
+
+<h2>Extension: Could regularization rescue overparameterization?</h2>
+
+<p>
+One natural question arises from the preceding results: could explicit regularization techniques rescue overparameterization in low-signal domains? To address this, we repeated the width sweep experiments with four regularization strategies: dropout (p=0.2), weight decay (λ=0.001), early stopping on validation loss, and no regularization (baseline). We applied each method to three representative datasets: synthetic data with σ=0 (high signal), synthetic data with σ=4 (high noise), and S&P 500 returns (no signal). Figure 7 shows the results.
+</p>
+
+<div style="text-align:center;">
+  <img src="./images/fig9_regularization.png" width="85%" alt="Four-panel figure showing regularization effects across noise levels: weight decay improves performance on clean data, early stopping helps at high noise, but all methods fail on S&P 500.">
+  <div style="font-size:14px; color:#555;">Figure 7. Regularization study across three datasets showing that different methods work in different noise regimes, but none help on financial data.</div>
+</div>
+
+<p>
+On clean synthetic data (σ=0), weight decay provided the strongest performance, improving R² from 0.988 to 0.993 by imposing an explicit structural prior. Early stopping and no regularization performed identically, while dropout reduced performance to 0.947 by removing too much model capacity. This demonstrates that when signal is strong, L2 regularization can improve upon implicit regularization alone.
+</p>
+
+<p>
+At high noise (σ=4), the pattern reversed dramatically. Early stopping was the only method achieving positive R² (0.056), preventing the model from overfitting to noise during training. Both weight decay and no regularization failed catastrophically, producing large negative R² values with high variance across seeds. In this regime, the problem shifted from bias to variance explosion, and only early termination of training prevented models from fitting spurious noise patterns.
+</p>
+
+<p>
+On S&P 500 returns, all four methods failed to achieve positive R² and produced very similar, nearly flat test error curves. Every regularization strategy produced negative R², with the best method (weight decay at R²=-0.0005) still worse than the naive mean predictor. This demonstrates that when predictive signal is fundamentally absent, no amount of regularization can improve generalization.
+</p>
+
+<p>
+Our results suggest a hierarchy of regularization effectiveness that depends on signal-to-noise ratio: weight decay excels when signal is strong, early stopping helps when noise dominates, but nothing works when signal is absent. The failure of all methods on financial data confirms that overparameterization in this domain reflects a fundamental signal problem rather than a technical regularization problem. Different regularization strategies can modify the double descent curve under appropriate conditions, but they cannot create predictive structure where none exists.
 </p>
 
       </div>
@@ -715,15 +742,15 @@ These results confirm the third hypothesis. When the data generating process is 
 
 
 <p>
-This work examined whether the double descent phenomenon, widely documented in high signal machine learning tasks, extends to low signal financial time series. The experiments support all three hypotheses. On clean synthetic data, multilayer perceptrons reproduce the familiar double descent curve with a sharp interpolation peak and recovery at large widths. As label noise increases, this structure weakens and eventually disappears, and smaller models become more robust than larger ones. When the same pipeline is applied to S&P 500 returns, the test error curve is nearly flat, the interpolation peak is minimal, and all models fail to outperform the naive mean predictor. These findings indicate that double descent requires stable, learnable structure and does not arise in domains where noise dominates the conditional distribution of returns.
+This work examined whether the double descent phenomenon, widely documented in high signal machine learning tasks, extends to low signal financial time series. The experiments support all three hypotheses. On clean synthetic data, multilayer perceptrons reproduce the familiar double descent curve with a sharp interpolation peak and recovery at large widths. As label noise increases, this structure weakens and eventually disappears, and smaller models become more robust than larger ones. When the same pipeline is applied to S&P 500 returns, the test error curve is nearly flat, the interpolation peak is minimal, and all models fail to outperform the naive mean predictor. These findings suggest that, in these settings, double descent requires stable, learnable structure and does not arise in domains where noise dominates the conditional distribution of returns.
 </p>
 
 <p>
-The results have practical implications. In settings with extremely low signal-to-noise ratio, increasing model capacity does not reliably improve generalization. Simpler models and classical regularization therefore remain appropriate. The conditions that enable benign overfitting and beneficial overparameterization—strong signal, stable distributions, and alignment between model inductive biases and data geometry—are not satisfied in daily equity returns.
+The results have practical implications. In settings with extremely low signal-to-noise ratio, increasing model capacity does not reliably improve generalization. Simpler models and classical regularization therefore remain appropriate. To test whether this failure could be overcome with explicit regularization, we evaluated dropout, weight decay, and early stopping across all noise levels. While different methods proved effective in different regimes (weight decay helped at σ=0, early stopping at σ=4), all four methods failed to achieve positive R<sup>2</sup> and produced very similar, nearly flat test error curves on S&P 500 data. This provides evidence that the observed failures stem from fundamental signal absence rather than insufficient regularization.
 </p>
 
 <p>
-Beyond evaluating these hypotheses, this work contributes a systematic comparison between domains where double descent is known to occur and those where it fails. By combining controlled synthetic experiments with a matched financial study under an identical modeling protocol, we isolate signal-to-noise ratio as a primary driver of the interpolation peak and provide direct empirical evidence that overparameterized deep models do not confer the same benefits in low-signal, non-stationary settings. This positions the results not only as an application study, but as a domain-informed analysis of when modern deep learning intuitions break down.
+Beyond evaluating these hypotheses, this work contributes a systematic comparison between domains where double descent is known to occur and those where it fails. By combining controlled synthetic experiments with a matched financial study under an identical modeling protocol, we isolate signal-to-noise ratio as a primary driver of the interpolation peak and rule out insufficient regularization as an alternative explanation. This provides direct empirical evidence that overparameterized deep models do not confer the same benefits in low-signal, non-stationary settings. The results position this work not only as an application study, but as a domain-informed analysis of when modern deep learning intuitions break down.
 </p>
 
 
@@ -736,7 +763,7 @@ The study focuses on one-day-ahead prediction using fixed technical features and
 <h2>Future work</h2>
 
 <p>
-Potential extensions include evaluating sequence-based architectures in settings with stronger temporal structure, exploring feature constructions that may increase signal strength, and testing whether other asset classes exhibit different generalization behavior. Further analysis of how implicit regularization interacts with noise in more complex models may help clarify when double descent should be expected to appear.
+Potential extensions include evaluating sequence-based architectures in settings with stronger temporal structure, exploring feature constructions that may increase signal strength, and testing whether other asset classes exhibit different generalization behavior. While explicit regularization techniques were shown not to rescue overparameterization in financial data, other architectural modifications such as attention mechanisms, ensemble methods, or meta-learning approaches may warrant investigation. Understanding which modeling choices can extract weak signal from noisy, non-stationary environments remains an open question.
 </p>
 
 
@@ -780,11 +807,6 @@ Potential extensions include evaluating sequence-based architectures in settings
 
         </div>
     </div>
-
-    <div class="margin-right-block">
-        The references combine three strands of work: empirical studies of double descent, theoretical analyses of interpolation and benign overfitting, and applications in time series and finance. Together they provide the conceptual backdrop for interpreting the experiments in this blog.
-    </div>
-
 </div>
 
 </body>
